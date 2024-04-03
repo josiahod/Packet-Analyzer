@@ -7,6 +7,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.TimeoutException;
+import java.util.ArrayList; 
+import java.util.List;
+
+
 
 import org.pcap4j.core.*;
 import org.pcap4j.packet.IpV4Packet;
@@ -71,6 +75,7 @@ public class NetworkTrafficAnalzyer extends Thread {
 
         
         try {
+        List<HashMap<String, String>> packetsList = new ArrayList<>(); //stores each of the packets
         for(int i=0; i<=5; i++){
            Packet packet = handle.getNextPacketEx();
 
@@ -142,6 +147,8 @@ public class NetworkTrafficAnalzyer extends Thread {
                return;
            }
            System.out.println(infoTable);
+           packetsList.add(infoTable);
+
         }
 
         } catch (PcapNativeException | TimeoutException | EOFException e) {
