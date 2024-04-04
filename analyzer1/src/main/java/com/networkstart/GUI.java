@@ -46,8 +46,7 @@ public class GUI extends Thread {
     }
 
     public static void main(String[] args){
-        GUI swingControlDemo = new GUI();      
-        swingControlDemo.showTableDemo();
+       
     
        PcapNetworkInterface nif = selectNetworkInterface();
        if (nif != null){
@@ -67,6 +66,8 @@ public class GUI extends Thread {
        try {
            // List the network devices available with a prompt
            nif = new NifSelector().selectNetworkInterface();
+           GUI swingControlDemo = new GUI();      
+           swingControlDemo.showTableDemo();
        } catch (IOException e) {
            e.printStackTrace();
        }
@@ -102,7 +103,7 @@ public class GUI extends Thread {
        
        try {
        List<HashMap<String, String>> packetsList = new ArrayList<>(); //stores each of the packets
-       for(int i=0; i<=20; i++){
+       for(int i=0; i<50; i++){
           Packet packet = handle.getNextPacketEx();
 
           long timestamp = handle.getTimestamp().getTime(); // Using integer value of timestamp
@@ -112,6 +113,7 @@ public class GUI extends Thread {
           String formatTimestamp = dateFormat.format(date);
   
            HashMap<String, String> infoTable = new HashMap<>();
+           try {
           // Parse Info from Packet
           if (packet.contains(IpV4Packet.class)) {
               IpV4Packet ipV4Packet = packet.get(IpV4Packet.class);
@@ -143,7 +145,7 @@ public class GUI extends Thread {
   
   
           } else if (packet.contains(IpV6Packet.class)) {
-              // Handle IPv6 packet
+            // Handle IPv6 packet
               IpV6Packet ipV6Packet = packet.get(IpV6Packet.class);
   
               // Get Source IP Address
@@ -158,9 +160,9 @@ public class GUI extends Thread {
               String protocolName = getProtocolName(nextHeader);
               Port srcPort = transPacket.getHeader().getSrcPort();
               Port destPort = transPacket.getHeader().getDstPort();
-              // Return the information as hashmap/hashtable
+           
 
-  
+              // Return the information as hashmap/hashtable
               infoTable.put("Timestamp", formatTimestamp);
               infoTable.put("Source IP Address", srcAddr.getHostAddress());
               infoTable.put("Destination IP Address", desAddr.getHostAddress());
@@ -169,12 +171,22 @@ public class GUI extends Thread {
               infoTable.put("Destination Port", Integer.toString(destPort.valueAsInt()));
   
           } else {
-              System.out.println("Packet is neither IPv4 nor IPv6");
-              return;
+            throw new IllegalArgumentException("Packet is neither IPv4 nor IPv6");
+             // System.out.println("Packet is neither IPv4 nor IPv6");
+             // return;
           }
           System.out.println(infoTable);
           addDataToTable(infoTable);
           packetsList.add(infoTable);
+         } catch (NullPointerException e) {
+            System.out.println("Null Pointer Exception: " + e.getMessage());
+            continue; // Move to the next iteration of the loop
+        }
+        catch (IllegalArgumentException e)
+        {
+         System.out.println(e.getMessage());
+         continue; // Move to the next iteration of the loop
+        }
        }
 
        } catch (PcapNativeException | TimeoutException | EOFException e) {
@@ -182,7 +194,8 @@ public class GUI extends Thread {
            return;
        } catch (NotOpenException e) {
            e.printStackTrace();
-       }finally{
+       }
+       finally{
            handle.close();
        }
    }
@@ -201,8 +214,6 @@ public class GUI extends Thread {
                return "Other";
        }
    }
-
-
 
     private static void prepareGUI(){
         mainFrame = new JFrame("Packet Capture");
@@ -249,7 +260,6 @@ public class GUI extends Thread {
         for (int i = 0; i < table.getColumnCount(); i++) {
             row[i] = rowData.get(table.getColumnName(i));
         }
-        System.out.println(row);
         tableModel.addRow(row);
     }
 }
