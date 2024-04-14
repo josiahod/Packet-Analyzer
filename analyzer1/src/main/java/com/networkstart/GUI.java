@@ -28,14 +28,22 @@ import java.util.concurrent.TimeoutException;
 import java.util.ArrayList; 
 import java.util.List;
  
-
 import org.pcap4j.core.*;
+import org.pcap4j.packet.ArpPacket;
+import org.pcap4j.packet.DnsPacket;
+import org.pcap4j.packet.IcmpV4CommonPacket;
+import org.pcap4j.packet.IcmpV6CommonPacket;
+import org.pcap4j.packet.IpPacket;
 import org.pcap4j.packet.IpV4Packet;
 import org.pcap4j.packet.IpV6Packet;
 import org.pcap4j.packet.Packet;
+import org.pcap4j.packet.TcpPacket;
 import org.pcap4j.packet.TransportPacket;
 import org.pcap4j.packet.namednumber.Port;
+import org.pcap4j.packet.namednumber.TcpPort;
 import org.pcap4j.util.NifSelector;
+import java.net.InetAddress;
+
 
 
 public class GUI extends Thread {
@@ -124,71 +132,103 @@ public class GUI extends Thread {
   
            HashMap<String, String> infoTable = new HashMap<>();
            try {
-          // Parse Info from Packet
-          if (packet.contains(IpV4Packet.class)) {
-              IpV4Packet ipV4Packet = packet.get(IpV4Packet.class);
-  
-              TransportPacket transPacket = packet.get(TransportPacket.class);
-  
-              // Get Source IP Address
-              Inet4Address srcAddr = ipV4Packet.getHeader().getSrcAddr();
-  
-              // Get Destination IP Address
-              Inet4Address desAddr = ipV4Packet.getHeader().getDstAddr();
-  
-              // Get Protocol
-              byte protocol_type = ipV4Packet.getHeader().getProtocol().value();
-  
-              String protocolName = getProtocolName(protocol_type);
-              // Get Source and Destination Port
-              Port srcPort = transPacket.getHeader().getSrcPort();
-              Port destPort = transPacket.getHeader().getDstPort();
-  
-              // Return the information as hashmap/hashtable
-  
-              infoTable.put("Timestamp", formatTimestamp);
-              infoTable.put("Source IP Address", srcAddr.getHostAddress());
-              infoTable.put("Destination IP Address", desAddr.getHostAddress());
-              infoTable.put("Protocol", protocolName);
-              infoTable.put("Source Port", Integer.toString(srcPort.valueAsInt()));
-              infoTable.put("Destination Port", Integer.toString(destPort.valueAsInt()));
-  
-  
-          } else if (packet.contains(IpV6Packet.class)) {
-            // Handle IPv6 packet
-              IpV6Packet ipV6Packet = packet.get(IpV6Packet.class);
-  
-              // Get Source IP Address
-              Inet6Address srcAddr = ipV6Packet.getHeader().getSrcAddr();
-  
-              // Get Destination IP Address
-              Inet6Address desAddr = ipV6Packet.getHeader().getDstAddr();
-              TransportPacket transPacket = packet.get(TransportPacket.class);
-              // Get Next Header (Protocol)
-              byte nextHeader = ipV6Packet.getHeader().getNextHeader().value();
-  
-              String protocolName = getProtocolName(nextHeader);
-              Port srcPort = transPacket.getHeader().getSrcPort();
-              Port destPort = transPacket.getHeader().getDstPort();
-           
+            // Parse Info from Packet
+            if (packet.contains(IpV4Packet.class)) {
+                IpV4Packet ipV4Packet = packet.get(IpV4Packet.class);
 
-              // Return the information as hashmap/hashtable
-              infoTable.put("Timestamp", formatTimestamp);
-              infoTable.put("Source IP Address", srcAddr.getHostAddress());
-              infoTable.put("Destination IP Address", desAddr.getHostAddress());
-              infoTable.put("Protocol", protocolName);
-              infoTable.put("Source Port", Integer.toString(srcPort.valueAsInt()));
-              infoTable.put("Destination Port", Integer.toString(destPort.valueAsInt()));
-  
-          } else {
-            throw new IllegalArgumentException("Packet is neither IPv4 nor IPv6");
-             // System.out.println("Packet is neither IPv4 nor IPv6");
-             // return;
-          }
-          System.out.println(infoTable);
-          addDataToTable(infoTable);
-          packetsList.add(infoTable);
-         } catch (NullPointerException e) {
+                TransportPacket transPacket = packet.get(TransportPacket.class);
+
+                // Get Source IP Address
+                Inet4Address srcAddr = ipV4Packet.getHeader().getSrcAddr();
+
+                // Get Destination IP Address
+                Inet4Address desAddr = ipV4Packet.getHeader().getDstAddr();
+
+                // Get Protocol
+                byte protocol_type = ipV4Packet.getHeader().getProtocol().value();
+
+                String protocolName = getProtocolName(protocol_type);
+                // Get Source and Destination Port
+                Port srcPort = transPacket.getHeader().getSrcPort();
+                Port destPort = transPacket.getHeader().getDstPort();
+
+                // Return the information as hashmap/hashtable
+
+                infoTable.put("Timestamp", formatTimestamp);
+                infoTable.put("Source IP Address", srcAddr.getHostAddress());
+                infoTable.put("Destination IP Address", desAddr.getHostAddress());
+                infoTable.put("Protocol", protocolName);
+                infoTable.put("Source Port", Integer.toString(srcPort.valueAsInt()));
+                infoTable.put("Destination Port", Integer.toString(destPort.valueAsInt()));
+
+            } else if (packet.contains(IpV6Packet.class)) {
+                // Handle IPv6 packet
+                IpV6Packet ipV6Packet = packet.get(IpV6Packet.class);
+
+                // Get Source IP Address
+                Inet6Address srcAddr = ipV6Packet.getHeader().getSrcAddr();
+
+                // Get Destination IP Address
+                Inet6Address desAddr = ipV6Packet.getHeader().getDstAddr();
+                TransportPacket transPacket = packet.get(TransportPacket.class);
+                // Get Next Header (Protocol)
+                byte nextHeader = ipV6Packet.getHeader().getNextHeader().value();
+
+                String protocolName = getProtocolName(nextHeader);
+                Port srcPort = transPacket.getHeader().getSrcPort();
+                Port destPort = transPacket.getHeader().getDstPort();
+
+                // Return the information as hashmap/hashtable
+                infoTable.put("Timestamp", formatTimestamp);
+                infoTable.put("Source IP Address", srcAddr.getHostAddress());
+                infoTable.put("Destination IP Address", desAddr.getHostAddress());
+                infoTable.put("Protocol", protocolName);
+                infoTable.put("Source Port", Integer.toString(srcPort.valueAsInt()));
+                infoTable.put("Destination Port", Integer.toString(destPort.valueAsInt()));
+            } else if (packet.contains(IcmpV4CommonPacket.class)) {
+                infoTable.put("Timestamp", formatTimestamp);
+                infoTable.put("Timestamp", formatTimestamp);
+                infoTable.put("Source IP Address", "-");
+                infoTable.put("Destination IP Address", "-");
+                infoTable.put("Protocol", "ICMP");
+                infoTable.put("Source Port", "-");
+                infoTable.put("Destination Port", "-");
+            } else if (packet.contains(IcmpV6CommonPacket.class)) {
+                IcmpV6CommonPacket icmpV6Packet = packet.get(IcmpV6CommonPacket.class);
+            } else if (packet.contains(ArpPacket.class)) {
+                ArpPacket arpPacket = packet.get(ArpPacket.class);
+                InetAddress srcAddr = arpPacket.getHeader().getSrcProtocolAddr();
+                InetAddress desAddr = arpPacket.getHeader().getDstProtocolAddr();
+                infoTable.put("Timestamp", formatTimestamp);
+                infoTable.put("Source IP Address", srcAddr.getHostAddress());
+                infoTable.put("Destination IP Address", desAddr.getHostAddress());
+                infoTable.put("Protocol", "ARP");
+                infoTable.put("Source Port", "-");
+                infoTable.put("Destination Port", "-");
+
+            } else if (packet.contains(DnsPacket.class)) {
+                // Handle DNS packet
+                DnsPacket dnsPacket = packet.get(DnsPacket.class);
+                IpPacket.IpHeader ipHeader = packet.get(IpPacket.class).getHeader();
+                InetAddress srcAddr = ipHeader.getSrcAddr();
+                InetAddress desAddr = ipHeader.getDstAddr();
+                infoTable.put("Timestamp", formatTimestamp);
+                infoTable.put("Source IP Address", srcAddr.getHostAddress());
+                infoTable.put("Destination IP Address", desAddr.getHostAddress());
+                infoTable.put("Protocol", "DNS");
+                infoTable.put("Source Port", "-"); // No source port for DNS (UDP)
+                infoTable.put("Destination Port", "-"); // No destination port for DNS (UDP)
+
+            } else {
+                throw new IllegalArgumentException("Packet is neither IPv4 nor IPv6");
+                // System.out.println("Packet is neither IPv4 nor IPv6");
+                // return;
+            }
+
+            System.out.println(infoTable);
+            addDataToTable(infoTable);
+            packetsList.add(infoTable);
+        } catch (NullPointerException e) {
             System.out.println("Null Pointer Exception: " + e.getMessage());
             continue; // Move to the next iteration of the loop
         }
@@ -241,8 +281,7 @@ public class GUI extends Thread {
         filterPanel = new JPanel();//panel for filtering our data
         filterPanel.setLayout(new FlowLayout());
 
-        
-        filterComboBox = new JComboBox<>(new String[]{"TCP", "UDP"}); //dropdown section
+        filterComboBox = new JComboBox<>(new String[]{"TCP", "UDP", "ARP", "DNS"}); //dropdown section
         filterComboBox.addActionListener(new ActionListener() //check if dropdown is selected
         {
             public void actionPerformed(ActionEvent e) 

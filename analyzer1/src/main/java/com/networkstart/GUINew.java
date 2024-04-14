@@ -40,7 +40,7 @@ import org.pcap4j.packet.namednumber.Port;
 import org.pcap4j.packet.namednumber.TcpPort;
 import org.pcap4j.util.NifSelector;
 
-public class GUI extends Thread {
+public class GUINew extends Thread {
     private static JFrame mainFrame;
     private static JLabel headerLabel;
     private static JLabel statusLabel;
@@ -51,7 +51,7 @@ public class GUI extends Thread {
     public static final TcpPort HTTPS_PORT = TcpPort.HTTPS;
 
     // starts gui
-    public GUI() {
+    public GUINew() {
         prepareGUI();
     }
 
@@ -75,7 +75,7 @@ public class GUI extends Thread {
         try {
             // List the network devices available with a prompt
             nif = new NifSelector().selectNetworkInterface();
-            GUI swingControlDemo = new GUI();
+            GUINew swingControlDemo = new GUINew();
             swingControlDemo.showTableDemo();
         } catch (IOException e) {
             e.printStackTrace();
