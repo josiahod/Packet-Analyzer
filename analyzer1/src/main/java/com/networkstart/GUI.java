@@ -1,9 +1,12 @@
 package com.networkstart;
 
+
+import javax.swing.*;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.HashMap;
@@ -13,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -23,6 +27,7 @@ import java.util.Date;
 import java.util.concurrent.TimeoutException;
 import java.util.ArrayList; 
 import java.util.List;
+ 
 
 import org.pcap4j.core.*;
 import org.pcap4j.packet.IpV4Packet;
@@ -32,6 +37,7 @@ import org.pcap4j.packet.TransportPacket;
 import org.pcap4j.packet.namednumber.Port;
 import org.pcap4j.util.NifSelector;
 
+
 public class GUI extends Thread {
     private static JFrame mainFrame;
     private static JLabel headerLabel;
@@ -39,6 +45,12 @@ public class GUI extends Thread {
     private static JPanel controlPanel;
     private static JTable table;
     private static DefaultTableModel tableModel;
+    private static TableRowSorter<DefaultTableModel> rowSorter;
+    private static JPanel filterPanel; // New panel for the filter
+    private static JComboBox<String> filterComboBox; 
+    private static List<HashMap<String, String>> packetsList = new ArrayList<>(); //stores each of the packets
+
+ 
 
     //starts gui
     public GUI(){
@@ -46,8 +58,7 @@ public class GUI extends Thread {
     }
 
     public static void main(String[] args){
-       
-    
+
        PcapNetworkInterface nif = selectNetworkInterface();
        if (nif != null){
            capturePacket(nif);
@@ -102,8 +113,7 @@ public class GUI extends Thread {
 
        
        try {
-       List<HashMap<String, String>> packetsList = new ArrayList<>(); //stores each of the packets
-       for(int i=0; i<50; i++){
+       for(int i=0; i<70; i++){
           Packet packet = handle.getNextPacketEx();
 
           long timestamp = handle.getTimestamp().getTime(); // Using integer value of timestamp
@@ -217,8 +227,8 @@ public class GUI extends Thread {
 
     private static void prepareGUI(){
         mainFrame = new JFrame("Packet Capture");
-        mainFrame.setSize(700,400); //gui window
-        mainFrame.setLayout(new GridLayout(2, 1)); 
+        mainFrame.setSize(700,325); //gui window
+        mainFrame.setLayout(new GridLayout(3, 1)); 
 
         mainFrame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent windowEvent){
@@ -228,21 +238,57 @@ public class GUI extends Thread {
 
         headerLabel = new JLabel("", JLabel.CENTER); //title
 
-        controlPanel = new JPanel(); //packet data stored here
-        controlPanel.setLayout(new FlowLayout());
+        filterPanel = new JPanel();//panel for filtering our data
+        filterPanel.setLayout(new FlowLayout());
 
-        mainFrame.add(headerLabel);
-        mainFrame.add(controlPanel);
+        
+        filterComboBox = new JComboBox<>(new String[]{"TCP", "UDP"}); //dropdown section
+        filterComboBox.addActionListener(new ActionListener() //check if dropdown is selected
+        {
+            public void actionPerformed(ActionEvent e) 
+            {
+                tableModel.setRowCount(0);
+                System.out.println("Protocol Selected: " + filterComboBox.getSelectedItem());
+                for (int i = 0; i < packetsList.size(); i++) 
+                {
+                    HashMap<String, String> packetsTable = packetsList.get(i);
+                    if(packetsTable.get("Protocol").equals(filterComboBox.getSelectedItem()))
+                    {
+                        System.out.println(packetsTable);
+                        addDataToTable(packetsTable);
+                    }
+                    
+                }
+            }
+        });
+
+        filterPanel.add(new JLabel("Protocol:"));
+        filterPanel.add(filterComboBox);
+
+
+
+        controlPanel = new JPanel(); //packet data stored here
+        controlPanel.setLayout(new BorderLayout());
+
+        mainFrame.add(headerLabel, BorderLayout.NORTH);
+        mainFrame.add(filterPanel, BorderLayout.CENTER);
+        mainFrame.add(controlPanel, BorderLayout.SOUTH); // add control panel at the bottom
         mainFrame.setVisible(true);  
     }
 
-    private static void showTableDemo(){
+    private static void showTableDemo()
+    {
         headerLabel.setText("Packet Capturing"); 
 
         String[] columnNames = {"Timestamp", "Source IP Address", "Destination IP Address", "Source Port", "Destination Port", "Protocol"};
 
         tableModel = new DefaultTableModel(columnNames, 0);
+        
         table = new JTable(tableModel);
+        rowSorter = new TableRowSorter<>(tableModel);
+        table.setRowSorter(rowSorter);
+
+
         JScrollPane scrollPane = new JScrollPane(table);
         table.setFillsViewportHeight(true);
         scrollPane.setPreferredSize(new Dimension(450, 450));
