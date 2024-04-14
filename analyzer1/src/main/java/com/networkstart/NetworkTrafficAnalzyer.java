@@ -52,7 +52,7 @@ public class NetworkTrafficAnalzyer extends Thread {
         final int SNAPLEN = 65536; // [bytes]
 
         // Declare timeout for packet capture
-        final int READ_TIMEOUT = 1000; // [ms]
+        final int READ_TIMEOUT = 15000; // [ms]
 
         if (nif == null) { // Early Return if nif is unable to select a device
           System.out.println("There are no devices available");
@@ -148,7 +148,6 @@ public class NetworkTrafficAnalzyer extends Thread {
            }
            System.out.println(infoTable);
            packetsList.add(infoTable);
-
         }
 
         } catch (PcapNativeException | TimeoutException | EOFException e) {
@@ -176,3 +175,4 @@ public class NetworkTrafficAnalzyer extends Thread {
         }
     }
 }
+
