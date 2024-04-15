@@ -1,6 +1,5 @@
 package com.networkstart;
 
-
 import javax.swing.*;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -27,6 +26,10 @@ import java.util.Date;
 import java.util.concurrent.TimeoutException;
 import java.util.ArrayList; 
 import java.util.List;
+import java.util.Map;
+import java.io.File;
+
+
  
 import org.pcap4j.core.*;
 import org.pcap4j.packet.ArpPacket;
@@ -44,8 +47,6 @@ import org.pcap4j.packet.namednumber.TcpPort;
 import org.pcap4j.util.NifSelector;
 import java.net.InetAddress;
 
-
-
 public class GUI extends Thread {
     private static JFrame mainFrame;
     private static JLabel headerLabel;
@@ -56,17 +57,15 @@ public class GUI extends Thread {
     private static TableRowSorter<DefaultTableModel> rowSorter;
     private static JPanel filterPanel; // New panel for the filter
     private static JComboBox<String> filterComboBox; 
-    private static List<HashMap<String, String>> packetsList = new ArrayList<>(); //stores each of the packets
-
- 
+    private static ArrayList<HashMap<String, String>> packetsList = new ArrayList<>(); //stores each of the packets
 
     //starts gui
-    public GUI(){
+    public GUI()
+    {
         prepareGUI();
     }
 
     public static void main(String[] args){
-
        PcapNetworkInterface nif = selectNetworkInterface();
        if (nif != null){
            capturePacket(nif);
@@ -121,7 +120,7 @@ public class GUI extends Thread {
 
        
        try {
-       for(int i=0; i<70; i++){
+       for(int i=0; i<5; i++){
           Packet packet = handle.getNextPacketEx();
 
           long timestamp = handle.getTimestamp().getTime(); // Using integer value of timestamp
@@ -226,7 +225,11 @@ public class GUI extends Thread {
             }
 
             System.out.println(infoTable);
-            addDataToTable(infoTable);
+            if((infoTable.get("Protocol").equals(filterComboBox.getSelectedItem())) || (filterComboBox.getSelectedItem().equals("")))
+            {
+                addDataToTable(infoTable);
+            }
+            //addDataToTable(infoTable);
             packetsList.add(infoTable);
         } catch (NullPointerException e) {
             System.out.println("Null Pointer Exception: " + e.getMessage());
@@ -281,7 +284,41 @@ public class GUI extends Thread {
         filterPanel = new JPanel();//panel for filtering our data
         filterPanel.setLayout(new FlowLayout());
 
-        filterComboBox = new JComboBox<>(new String[]{"TCP", "UDP", "ARP", "DNS"}); //dropdown section
+        JButton CreateSnap=new JButton("Create Snapshot");
+        CreateSnap.addActionListener(new ActionListener()
+        {  
+            public void actionPerformed(ActionEvent e)
+            {  
+                SnapShot.write_to_file(packetsList,null);
+                JOptionPane.showMessageDialog(mainFrame, "Snapshot Created");
+            }  
+        }); 
+        
+        JButton ReadSnap = new JButton("Read Snapshot");
+        ReadSnap.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser(System.getProperty("user.dir"));
+                int result = fileChooser.showOpenDialog(null);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    tableModel.setRowCount(0);
+                    File selectedFile = fileChooser.getSelectedFile();
+                    System.out.println("Selected File: " + selectedFile.getAbsolutePath());
+                    ArrayList<HashMap<String, String>> recievedSnap = SnapShot.readfile(selectedFile.getAbsolutePath());
+                    packetsList = recievedSnap;
+                    for(int i = 0; i < recievedSnap.size(); i++)
+                    {
+                        addDataToTable(recievedSnap.get(i));
+                    }
+                    JOptionPane.showMessageDialog(mainFrame, "Snapshot Read");
+                } else 
+                {
+                    System.out.println("No file selected");
+                }
+            }
+        });
+
+
+        filterComboBox = new JComboBox<>(new String[]{"","TCP", "UDP", "ARP", "DNS"}); //dropdown section
         filterComboBox.addActionListener(new ActionListener() //check if dropdown is selected
         {
             public void actionPerformed(ActionEvent e) 
@@ -291,16 +328,16 @@ public class GUI extends Thread {
                 for (int i = 0; i < packetsList.size(); i++) 
                 {
                     HashMap<String, String> packetsTable = packetsList.get(i);
-                    if(packetsTable.get("Protocol").equals(filterComboBox.getSelectedItem()))
+                    if((packetsTable.get("Protocol").equals(filterComboBox.getSelectedItem())) || (filterComboBox.getSelectedItem().equals("")))
                     {
-                        System.out.println(packetsTable);
                         addDataToTable(packetsTable);
                     }
                     
                 }
             }
         });
-
+        filterPanel.add(CreateSnap);
+        filterPanel.add(ReadSnap);
         filterPanel.add(new JLabel("Protocol:"));
         filterPanel.add(filterComboBox);
 
