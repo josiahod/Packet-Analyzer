@@ -8,7 +8,7 @@ To Run this project:
 6. Enter number of packets to capture
 
 Snapshot Feature:
-Save captured packets into a text file and view them back by opening them under Store Snapshots
+Save captured packets into a text file and view them back by opening them under the "Store Snapshots" folder
 
 Filtering Feature:
 Filters packets by protocol. TCP, UDP, DNS, ARP supported.
